@@ -1,0 +1,17 @@
+# Copy this to refresh.config and fill in your values.
+# refresh.config is git-ignored so your settings never get committed.
+#
+# NOTE: no password here. The scripts read it from the SQLPASSWORD environment
+# variable so it is never stored in a file. See README "Scheduling" for how to
+# set it as a persistent Windows user variable.
+
+# Path to your cleaned master spreadsheet (the one you add rows to each period).
+DATA_FILE=C:\Users\me\Documents\sales_master.xlsx
+
+# Destination table in the database.
+TABLE=sales
+
+# Connection details (from deploy.sh output).
+SERVER=sql-analytics-1234.database.windows.net
+DATABASE=analytics
+DB_USER=sqladmin

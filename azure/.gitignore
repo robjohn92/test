@@ -1,0 +1,8 @@
+# Local connection settings — never commit (may reveal server/user; password is
+# kept out of here anyway, in the SQLPASSWORD env var).
+refresh.config
+
+# Data files / exports
+*.xlsx
+*.xls
+*.csv

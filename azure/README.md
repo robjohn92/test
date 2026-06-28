@@ -11,6 +11,8 @@ The flow: **deploy → create the sample table → connect Power BI → load you
 | `deploy.sh` | One command to provision everything with the Azure CLI. |
 | `schema.sql` | A `sales` sample table with a few rows so you can prove the path works before touching your own data. |
 | `load_data.py` | Cleans a messy CSV/Excel file and loads it into a table. |
+| `refresh.bat` / `refresh.sh` | One-click (or scheduled) reload of your master spreadsheet into the database. |
+| `refresh.config.example` | Template for your file path + connection settings (copy to `refresh.config`). |
 
 ## Prerequisites
 
@@ -76,6 +78,61 @@ python load_data.py "Q1 numbers.xlsx" --table sales \
 Back in Power BI, **Home → Refresh** to pull the new rows.
 
 ---
+
+## Keeping data up to date each week/month
+
+If you maintain **one master spreadsheet** that you add new rows to each period,
+you can keep the database in sync with a single script — manually with a
+double-click, or automatically on a schedule.
+
+### The pattern
+
+1. Keep one cleaned **master file** per dataset (e.g. `sales_master.xlsx`).
+2. Each week/month, paste the new rows into it.
+3. Run the refresh script. It does a **full reload** (`--if-exists replace`), so
+   the database always mirrors the file exactly — **no duplicate rows**, even if
+   you re-run it.
+4. Power BI's scheduled refresh (or **Home → Refresh** in Desktop) picks it up.
+
+> Why full reload instead of "append just the new rows"? Append can silently
+> double-count if a script runs twice. Reloading the whole file is simpler and
+> self-correcting. For very large datasets there's an incremental approach with a
+> unique key — ask if you get there.
+
+### One-time setup
+
+1. Copy `refresh.config.example` to `refresh.config` and fill in your file path
+   and connection details. (`refresh.config` is git-ignored.)
+2. Store the password as a **persistent user environment variable** so the script
+   can run unattended without it sitting in a file. In an **admin-free** PowerShell:
+
+   ```powershell
+   setx SQLPASSWORD "your-password-here"
+   ```
+
+   Close and reopen your terminal afterwards so it takes effect.
+
+### Run it manually
+
+Double-click `refresh.bat` (Windows) any time after you update the file, or:
+
+```bash
+./refresh.sh        # macOS / Linux
+```
+
+### Run it on a schedule (Windows Task Scheduler)
+
+1. Open **Task Scheduler → Create Basic Task**.
+2. Name it (e.g. "Refresh sales DB"), set the trigger (**Weekly** or **Monthly**).
+3. Action: **Start a program** → browse to `refresh.bat`.
+4. Tick **"Run whether user is logged on or not"** so it runs in the background.
+
+On macOS/Linux, use `cron` instead, e.g. `0 7 1 * *` (07:00 on the 1st of each
+month) calling `refresh.sh`.
+
+> The schedule needs your PC on at that time. For a fully hands-off version that
+> runs in the cloud even when your PC is off (file in OneDrive/Azure Blob loaded
+> by an Azure timer job), ask and I'll set it up — it's more moving parts.
 
 ## Cleaning messy spreadsheets
 
